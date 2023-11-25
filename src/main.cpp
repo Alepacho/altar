@@ -2,7 +2,13 @@
 #include <filesystem>
 #include <string>
 #include <fstream>
-#include <format>
+
+#ifdef __APPLE__
+	#include <fmt/core.h>
+	#define format fmt::format
+#else
+	#include <format>
+#endif // __APPLE__
 #include <vector>
 
 using namespace std;
@@ -23,34 +29,40 @@ vector<package> packages = {
 #ifdef _WIN32
 	{		 "altar",			 "https://github.com/ENDESGA/altar.git",	 "main",		 { "out\\ninja\\ninja.exe" }},
 #else
-	{ "altar", "https://github.com/ENDESGA/altar.git", "main", { "out/ninja/ninja" } },
-#endif
+	#ifdef __APPLE__
+	{ "altar", "https://github.com/Alepacho/altar.git", "main", { "out/ninja/ninja.mac" } },
+	#else
+	{ "altar", "https://github.com/Alepacho/altar.git", "main", { "out/ninja/ninja.linux" } },
+	#endif	 // __APPLE__
+#endif	 // _WIN32
 	{			"volk",					"https://github.com/zeux/volk.git", "master",					{ "volk.h", "volk.c" }}
 };
 
 //
 
-void replace_in_file(const string& filepath, const string& target, const string& replacement) {
-	path path(filepath);
-	if (!exists(path)) return;
+void replace_in_file( const string &filepath, const string &target, const string &replacement )
+{
+	path path( filepath );
+	if( !exists( path ) ) return;
 
 	string file_content;
 	{
-		ifstream file(filepath, ios::in);
-		if (!file.is_open()) return;
+		ifstream file( filepath, ios::in );
+		if( !file.is_open() ) return;
 
-		file_content.assign(istreambuf_iterator<char>(file), istreambuf_iterator<char>());
+		file_content.assign( istreambuf_iterator<char>( file ), istreambuf_iterator<char>() );
 		file.close();
 	}
 
-	size_t pos = file_content.find(target);
-	if (pos != string::npos) {
-		file_content.replace(pos, target.length(), replacement);
+	size_t pos = file_content.find( target );
+	if( pos != string::npos )
+	{
+		file_content.replace( pos, target.length(), replacement );
 	}
 
 	{
-		ofstream file(filepath, ios::out | ios::trunc);
-		if (!file.is_open()) return;
+		ofstream file( filepath, ios::out | ios::trunc );
+		if( !file.is_open() ) return;
 
 		file << file_content;
 		file.close();
@@ -83,14 +95,18 @@ int main()
 	string project_name_str = "";
 	getline( cin, project_name_str );
 
-	path project_name = path(project_name_str);
+	path project_name = path( project_name_str );
 	path project_dir = current_path() / project_name;
 
 #ifdef _WIN32
 	path ninja_path = project_dir / "out" / "ninja" / "ninja.exe";
 #else
-	path ninja_path = project_dir / "out" / "ninja" / "ninja";
-#endif
+	#ifdef __APPLE__
+	path ninja_path = project_dir / "out" / "ninja" / "ninja.mac";
+	#else
+	path ninja_path = project_dir / "out" / "ninja" / "ninja.linux";
+	#endif // __APPLE__
+#endif // _WIN32
 
 	create_directories( project_name / "inc" / "Volk" );
 	create_directories( project_name / "src" );
@@ -98,7 +114,7 @@ int main()
 
 	system( ( "cd " + project_name.string() + " && git init" ).c_str() );
 
-	ofstream( project_name / "src" / "main.c" );
+	ofstream o( project_name / "src" / "main.c" );
 
 	// get packages
 	for( const auto &pkg: packages )
@@ -122,26 +138,26 @@ int main()
 
 	// get Vulkan for Windows
 #ifdef _WIN32
-	system(format("cd {} && xcopy /E /I %VULKAN_SDK%\\Include\\vulkan inc\\vulkan && xcopy /E /I %VULKAN_SDK%\\Include\\vk_video inc\\vk_video", project_name.string()).c_str());
+	system( format( "cd {} && xcopy /E /I %VULKAN_SDK%\\Include\\vulkan inc\\vulkan && xcopy /E /I %VULKAN_SDK%\\Include\\vk_video inc\\vk_video", project_name.string() ).c_str() );
 #endif
 
 	// edit CMakeLists
-	replace_in_file((project_name / "CMakeLists.txt").string(), "hept", project_name.string());
+	replace_in_file( ( project_name / "CMakeLists.txt" ).string(), "hept", project_name.string() );
 
 	// start CMake
 #ifdef _WIN32
-		system(format("cd {} && cmake -DCMAKE_MAKE_PROGRAM=\"{}\" -G \"Ninja Multi-Config\" -B out", project_name.string(), ninja_path.string()).c_str());
-		system(format("cd {} && echo cmake --build out --config Debug > build_debug.bat", project_name.string()).c_str());
-		system(format("cd {} && echo cmake --build out --config Release > build_release.bat", project_name.string()).c_str());
+	system( format( "cd {} && cmake -DCMAKE_MAKE_PROGRAM=\"{}\" -G \"Ninja Multi-Config\" -B out", project_name.string(), ninja_path.string() ).c_str() );
+	system( format( "cd {} && echo cmake --build out --config Debug > build_debug.bat", project_name.string() ).c_str() );
+	system( format( "cd {} && echo cmake --build out --config Release > build_release.bat", project_name.string() ).c_str() );
 #else
-		system(format("cd {} && chmod +x {} && cmake -DCMAKE_MAKE_PROGRAM=\"{}\" -G \"Ninja Multi-Config\" -B out", project_name.string(), ninja_path.string(), ninja_path.string()).c_str());
-		system(format("cd {} && echo 'cmake --build out --config Debug' > build_debug.sh", project_name.string()).c_str());
-		system(format("cd {} && echo 'cmake --build out --config Release' > build_release.sh", project_name.string()).c_str());
-		system(format("cd {} && chmod +x build_debug.sh build_release.sh", project_name.string()).c_str());
-#endif
+	system( format( "cd {} && chmod +x {} && cmake -DCMAKE_MAKE_PROGRAM=\"{}\" -G \"Ninja Multi-Config\" -B out", project_name.string(), ninja_path.string(), ninja_path.string() ).c_str() );
+	system( format( "cd {} && echo 'cmake --build out --config Debug' > build_debug.sh", project_name.string() ).c_str() );
+	system( format( "cd {} && echo 'cmake --build out --config Release' > build_release.sh", project_name.string() ).c_str() );
+	system( format( "cd {} && chmod +x build_debug.sh build_release.sh", project_name.string() ).c_str() );
+#endif // _WIN32
 
 	cout << " project creation complete." << endl;
-	cout << format(" {} project made in {}\\out\\", project_name.string(), project_name.string()) << endl;
+	cout << format( " {} project made in {}\\out\\", project_name.string(), project_name.string() ) << endl;
 	cout << " press Enter to exit..." << endl;
 	cin.get();
 }

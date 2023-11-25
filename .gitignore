@@ -50,3 +50,15 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Clangd
+.cache
+
+# Altar
+altar*
+
+# CMake
+build/
+
+# macOS
+.DS_Store
