@@ -30,9 +30,9 @@ vector<package> packages = {
 	{		 "altar",			 "https://github.com/ENDESGA/altar.git",	 "main",		 { "out\\ninja\\ninja.exe" }},
 #else
 	#ifdef __APPLE__
-	{ "altar", "https://github.com/Alepacho/altar.git", "main", { "out/ninja/ninja.mac" } },
+	{ "altar", "https://github.com/ENDESGA/altar.git", "main", { "out/ninja/ninja" } },
 	#else
-	{ "altar", "https://github.com/Alepacho/altar.git", "main", { "out/ninja/ninja.linux" } },
+	{ "altar", "https://github.com/ENDESGA/altar.git", "main", { "out/ninja/ninja.bin" } },
 	#endif	 // __APPLE__
 #endif	 // _WIN32
 	{			"volk",					"https://github.com/zeux/volk.git", "master",					{ "volk.h", "volk.c" }}
@@ -102,9 +102,9 @@ int main()
 	path ninja_path = project_dir / "out" / "ninja" / "ninja.exe";
 #else
 	#ifdef __APPLE__
-	path ninja_path = project_dir / "out" / "ninja" / "ninja.mac";
+	path ninja_path = project_dir / "out" / "ninja" / "ninja";
 	#else
-	path ninja_path = project_dir / "out" / "ninja" / "ninja.linux";
+	path ninja_path = project_dir / "out" / "ninja" / "ninja.bin";
 	#endif // __APPLE__
 #endif // _WIN32
 
